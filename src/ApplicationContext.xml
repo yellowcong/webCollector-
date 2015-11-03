@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:aop="http://www.springframework.org/schema/aop"
+	   xmlns:context="http://www.springframework.org/schema/context" 
+	   xmlns:tx="http://www.springframework.org/schema/tx"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans
+	   http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+       http://www.springframework.org/schema/aop 
+       http://www.springframework.org/schema/aop/spring-aop-2.0.xsd
+       http://www.springframework.org/schema/tx 
+	   http://www.springframework.org/schema/tx/spring-tx-2.0.xsd
+       http://www.springframework.org/schema/context 
+       http://www.springframework.org/schema/context/spring-context-2.5.xsd">
+	<!-- 通过我们 注释所表示的是可选配置的方式-->
+
+	<!-- 开启我们的注解 ,有时候 找不到类，我们可以在后面添加 * 表示所遇的包-->
+	<context:annotation-config/>
+	<context:component-scan base-package="com.yellowcong.*"/>
+	
+	<!-- 其中我们可以通过properties  
+	后面你有个神奇的空格
+	设定数据库的一些属性 -->
+	<context:property-placeholder location="classpath:jdbc-config-local.properties" />
+	<!-- 配置数据源 -->														  
+		<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+		<property name="driverClass" value="${driverClassName}"/>
+		<property name="jdbcUrl" value="${url}"/>
+		<property name="user" value="${username}"/>
+		<property name="password" value="${password}"/>
+		<!-- 链接池启动的初始值 -->
+		<property name="initialPoolSize" value="5"/>
+		<!-- 设定最大的请求连接 -->
+		<property name="maxPoolSize" value="500"/>
+		<!-- 最小的空闲值当空闲的连接数目比较 -->
+		<property name="minPoolSize" value="1"/>
+		<!--最大空闲值，超过60秒钟没有用就默认关闭， 默认值为 0 -->
+		<property name="maxIdleTime" value="0"/>
+		<!-- 连接数没有了的时候，获取的连接输 默认是 3 我们可以设定 -->
+		<property name="acquireIncrement" value="5"/>
+		<!-- 自动回收超时连接 -->               
+		<property name="unreturnedConnectionTimeout" value="1"/>
+		
+		<!--连接时间最长为10s ,超过了10s就自动收回了 -->               
+		<property name="maxIdleTimeExcessConnections" value="10"/>
+		<!--最长回收时间-->
+		<property name="maxConnectionAge" value="10"/>
+	</bean>
+	
+	<!-- 配置SessionFacrory ,其中我们是基于xml 配置使用LocalSessionFactoryBean这个类-->
+	<bean id="sessionFactory" class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"/>
+		<property name="packagesToScan">
+			<value>com.yellowcong.model</value>
+		</property>
+		<!-- 配置一些SQL数据    这个以前是在hibernate.cfg.xml中配置的数据-->
+		<property name="hibernateProperties">
+				<!-- 第二种设定值的方式 -->
+				<props>
+					<prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+					<prop key="hibernate.hbm2ddl.auto">update</prop>
+					<prop key="hibernate.show_sql">true</prop>
+					<prop key="hibernate.format_sql">false</prop>
+				</props>
+		</property>
+	</bean>
+	
+	<!-- 配置Spring的事物处理 -->
+	<!-- 创建事物管理器对象 -->
+	<bean id="txManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory"/>
+	</bean>
+	<!-- 配置Aop Spring 是通过Aop 来进行事物管理的 -->
+	<aop:config>
+		<!-- 设定事物 -->
+		<aop:pointcut id="allMethod" expression="execution(* com.yellowcong.dao.impl.*.*(..))"/>
+		<!-- 确定需要调用的方法 -->
+		<aop:advisor advice-ref="txAdvice"  pointcut-ref="allMethod"/>
+	</aop:config>
+	
+	<!-- 导入tx 事物管理,配置事物管理 -->
+	<tx:advice id="txAdvice" transaction-manager="txManager">
+		<tx:attributes>
+			<!-- 这个是所有的方法都加入事物管理 -->
+			<tx:method name="*" propagation="REQUIRED"/>
+		</tx:attributes>
+	</tx:advice>
+</beans>
