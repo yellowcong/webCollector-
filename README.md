@@ -23,7 +23,7 @@ for(int i=0;i<3;i++){
 		}
 		
 		
-	# 通过jsonp来解析html文档
+## 通过jsonp来解析html文档
 		
 		//下面是一段来爬取一个代理ip网站，通过jsoup来解析页面数据，然后存入到数据库中，这个部分主要是解析
 		//获取html文档,不是直接new 来实例化对象
@@ -87,7 +87,7 @@ for(int i=0;i<3;i++){
 		}
 		
 		
-	##  通过设定ip地址来瞒过一些反爬虫的网站
+##  通过设定ip地址来瞒过一些反爬虫的网站
 		public static String sendGet(String urlPath, String param){
 		  String result = "";
 	      BufferedReader buff = null;
